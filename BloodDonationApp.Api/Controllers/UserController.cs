@@ -95,6 +95,15 @@ namespace BloodDonationApp.Api.Controllers
                 {
                     PhoneNumber = MobileNumber;
                 }
+                //user.PhoneNumber = PhoneNumber;
+                //user.PhoneNumberConfirmed = false;
+                //await userManager.UpdateAsync(user);
+                var changePhoneNumber = await userManager.SetPhoneNumberAsync(user, PhoneNumber);
+
+                if (!changePhoneNumber.Succeeded)
+                {
+                    return new APIModel<string> { Success = false, Data = "Unable to set/change Phone Number !", Message = "" };
+                }
 
                 var token = await userManager.GenerateChangePhoneNumberTokenAsync(user, PhoneNumber);
                 var sendSMS = SMSService.SendSMSAsync(PhoneNumber, "Dear " + user.UserName + ", Your verification code: " + token);
@@ -109,6 +118,30 @@ namespace BloodDonationApp.Api.Controllers
             {
                 return new APIModel<string> { Success = false, Data = "Internal Error !", Message = ex.Message };
             }
+        }
+
+        [HttpPost]
+        [Route("verifytokenformobile")]
+        [Authorize]
+        public async Task<APIModel<string>> VerifyTokenForMobile([FromBody]TokenModel token)
+        {
+            try
+            {
+                var userId = this.GetLoggedInUserId();
+                var user = await userManager.FindByIdAsync(userId.ToString());
+                var verifyToken = await userManager.ChangePhoneNumberAsync(user, user.PhoneNumber, token.Token);
+                if (verifyToken.Succeeded)
+                {
+                    return new APIModel<string> { Success = true, Data = "Success ! Your Mobile Number is Verified.", Message = "" };
+                }
+
+                return new APIModel<string> { Success = false, Data = "Sorry ! The token is invalid or has expired.", Message = verifyToken.Errors.FirstOrDefault().Description };
+            }
+            catch(Exception ex)
+            {
+                return new APIModel<string> { Success = false, Data = "Internal Error !", Message = ex.Message };
+            }
+
         }
     }
 }
