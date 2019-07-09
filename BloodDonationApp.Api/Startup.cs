@@ -62,6 +62,7 @@ namespace BloodDonationApp.Api
                 options.SuppressModelStateInvalidFilter = true;
             });
             services.AddSingleton<ISMSService, TwilioSMSService>();
+            services.AddSingleton<IEmailService, GmailService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

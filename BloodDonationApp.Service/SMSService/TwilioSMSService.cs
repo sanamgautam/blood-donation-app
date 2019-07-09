@@ -25,7 +25,7 @@ namespace BloodDonationApp.Service
             _nepalISDCode = this.config["TwilioCredentials:NepalISDCode"];
         }
 
-        public bool SendSMSAsync(string To, string Message)
+        public bool SendSMS(string To, string Message)
         {
             try
             {

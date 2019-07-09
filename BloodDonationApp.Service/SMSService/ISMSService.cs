@@ -7,6 +7,6 @@ namespace BloodDonationApp.Service
 {
     public interface ISMSService
     {
-        bool SendSMSAsync(string To, string Message);
+        bool SendSMS(string To, string Message);
     }
 }
