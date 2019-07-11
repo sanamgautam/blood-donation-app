@@ -168,7 +168,7 @@ namespace BloodDonationApp.Api.Controllers
                 var token = await userManager.GenerateChangeEmailTokenAsync(user, EmailAddress);
                 var fullUrl = Url.Action("VerifyTokenForEmail", "User", new { id=user.Id, token }, Request.Scheme);
 
-                var sendSMS = emailService.SendMail(EmailAddress, "Email Verification", "Dear " + user.UserName + ", <br /><br />Click the link below to verify your email address:<br />" + fullUrl + "<br /><br />Note: This is an auto generated email, please do not reply to this email.<br /><br />Regards,<br />Blood Donation App Team", null);
+                var sendSMS = emailService.SendMail(EmailAddress, "Email Verification", Helper.GetVerifyEmailHtmlString(user.UserName, fullUrl), null);
                 if (!sendSMS)
                 {
                     return new APIModel<string> { Success = false, Data = "Unable to send email !", Message = "" };
