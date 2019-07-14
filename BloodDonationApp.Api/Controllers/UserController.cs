@@ -43,7 +43,7 @@ namespace BloodDonationApp.Api.Controllers
                     return new APIModel<string> { Success = false, Data = error.Errors.FirstOrDefault().ErrorMessage, Message = "" };
                 }
 
-                if(await userManager.FindByEmailAsync(signUpModel.Email)!= null)
+                if (context.Users.Where(u => u.Email == signUpModel.Email && u.EmailConfirmed).Any())
                 {
                     return new APIModel<string> { Success = false, Data = "This email is already in use ! Please enter another email.", Message = "" };
                 }
@@ -174,7 +174,7 @@ namespace BloodDonationApp.Api.Controllers
                     return new APIModel<string> { Success = false, Data = "Unable to send email !", Message = "" };
                 }
 
-                return new APIModel<string> { Success = true, Data = "Please check your email, a verification link is sent to your email !", Message = "" };
+                return new APIModel<string> { Success = true, Data = "A verification link is sent to your email !", Message = "" };
             }
             catch (Exception ex)
             {
@@ -200,6 +200,58 @@ namespace BloodDonationApp.Api.Controllers
             catch (Exception ex)
             {
                 return "Oops! Something went wrong.";
+            }
+
+        }
+
+        [Route("ResetPassword")]
+        [AllowAnonymous]
+        public async Task<APIModel<string>> ResetPassword(string MobileNumber)
+        {
+            try
+            {
+                var user = context.Users.Where(u => u.PhoneNumber == MobileNumber && u.PhoneNumberConfirmed).FirstOrDefault();
+                if (user == null)
+                {
+                    return new APIModel<string> { Success = false, Data = "Please enter a verified phone number !", Message = "" };
+                }
+
+                PhoneNumberTokenProvider<User> phoneNumberTokenProvider = new PhoneNumberTokenProvider<User>();
+                var token = await phoneNumberTokenProvider.GenerateAsync("Reset Password", userManager, user);
+
+                var sendSMS = smsService.SendSMS(user.PhoneNumber, "Your password reset token is: " + token);
+                if (!sendSMS)
+                {
+                    return new APIModel<string> { Success = false, Data = "Unable to send SMS !", Message = "" };
+                }
+                return new APIModel<string> { Success = true, Data = "A password reset token is sent to your mobile !", Message = "" };
+            }
+            catch (Exception ex)
+            {
+                return new APIModel<string> { Success = false, Data = "Internal Error !", Message = ex.Message };
+            }
+        }
+
+        [Route("VerifyResetPassword")]
+        [AllowAnonymous]
+        public async Task<APIModel<string>> VerifyResetPassword(string MobileNumber, string token)
+        {
+            try
+            {
+                var user = context.Users.Where(u => u.PhoneNumber == MobileNumber && u.PhoneNumberConfirmed).FirstOrDefault();
+                if (user == null) { }
+                PhoneNumberTokenProvider<User> phoneNumberTokenProvider = new PhoneNumberTokenProvider<User>();
+                var validateToken = await phoneNumberTokenProvider.ValidateAsync("Reset Password", token, userManager, user);
+                if (validateToken)
+                {
+                    return new APIModel<string> { Success = true, Data="", Message = "" };
+                }
+
+                return new APIModel<string> { Success = false, Data = "Sorry ! The token is invalid or has expired.", Message = "" };
+            }
+            catch (Exception ex)
+            {
+                return new APIModel<string> { Success = false, Data = "Oops! Something went wrong.", Message = ex.Message };
             }
 
         }

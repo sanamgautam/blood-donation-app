@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using BloodDonationApp.Data;
 using BloodDonationApp.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -17,17 +18,19 @@ namespace BloodDonationApp.Api.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private UserManager<User> userManager;
-        public AuthController(UserManager<User> userManager)
+        private readonly UserManager<User> userManager;
+        private readonly ApplicationDbContext context;
+        public AuthController(UserManager<User> userManager, ApplicationDbContext context)
         {
             this.userManager = userManager;
+            this.context = context;
         }
 
         [HttpPost]
-        [Route("login")]
+        [Route("Login")]
         public async Task<IActionResult> Login([FromBody] LoginModel loginModel)
         {
-            var user = await userManager.FindByNameAsync(loginModel.UserName);
+            var user = context.Users.Where(u => u.UserName == loginModel.UserName || (u.PhoneNumber == loginModel.UserName && u.PhoneNumberConfirmed) || (u.Email == loginModel.UserName && u.EmailConfirmed)).FirstOrDefault();
             if(user!=null && await userManager.CheckPasswordAsync(user, loginModel.Password))
             {
                 var claims = new List<Claim>
